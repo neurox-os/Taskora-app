@@ -306,7 +306,7 @@ async function playGreetingSequence(username, isNewUser = false) {
     const g3 = document.getElementById("greeting-3");
 
     if (isNewUser) {
-      if (g2) g2.innerHTML = `hello, <span id="greeting-username"></span>!`;
+      if (g2) g2.innerHTML = `Hello, <span id="greeting-username"></span>!`;
       if (g3) g3.textContent = "Let's get productive";
     } else {
       if (g2)

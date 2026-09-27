@@ -82,171 +82,130 @@
         </div>
 
         <div class="auth-panel">
-          <div class="glass-card auth-card">
-            <!-- Login Form -->
-            <form id="login-form" class="auth-form active" novalidate>
-              <h2>Welcome back</h2>
-              <p class="subtitle">
-                Enter your details to access your workspace.
-              </p>
+  <div class="glass-card auth-card">
+    
+    <!-- Login Form -->
+    <form id="login-form" class="auth-form active" novalidate>
+      <h2>Welcome back</h2>
+      <p class="subtitle">Enter your details to access your workspace.</p>
 
-              <div class="input-group">
-                <input
-                  type="email"
-                  id="login-email"
-                  required
-                  autocomplete="email"
-                  placeholder=" "
-                />
-                <label for="login-email">Email address</label>
-              </div>
-
-              <div class="input-group">
-                <input
-                  type="password"
-                  id="login-password"
-                  required
-                  autocomplete="current-password"
-                  placeholder=" "
-                />
-                <label for="login-password">Password</label>
-                <button
-                  type="button"
-                  class="toggle-password"
-                  aria-label="Toggle password visibility"
-                >
-                  <svg
-                    class="eye-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-              <button type="submit" class="btn-primary" id="btn-login">
-                <span class="btn-text">Sign in</span>
-                <div class="btn-loader"></div>
-              </button>
-
-              <div class="form-footer">
-                Don't have an account?
-                <a href="#" id="link-to-signup">Create one</a>
-              </div>
-            </form>
-
-            <!-- Sign Up Form -->
-            <form id="signup-form" class="auth-form" novalidate>
-              <h2>Create account</h2>
-              <p class="subtitle">
-                Join Taskora and supercharge your productivity.
-              </p>
-
-              <div class="input-group">
-                <input
-                  type="text"
-                  id="signup-username"
-                  required
-                  autocomplete="username"
-                  placeholder=" "
-                  minlength="3"
-                />
-                <label for="signup-username">Username</label>
-              </div>
-
-              <div class="input-group">
-                <input
-                  type="email"
-                  id="signup-email"
-                  required
-                  autocomplete="email"
-                  placeholder=" "
-                />
-                <label for="signup-email">Email address</label>
-              </div>
-
-              <div class="input-group">
-                <input
-                  type="password"
-                  id="signup-password"
-                  required
-                  autocomplete="new-password"
-                  placeholder=" "
-                />
-                <label for="signup-password">Password</label>
-                <button
-                  type="button"
-                  class="toggle-password"
-                  aria-label="Toggle password visibility"
-                >
-                  <svg
-                    class="eye-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-
-              <div
-                class="password-strength-container"
-                id="password-strength-container"
-              >
-                <div class="strength-header">
-                  <span>Password strength</span>
-                  <span id="strength-label">Weak</span>
-                </div>
-                <div class="strength-bars">
-                  <div class="bar"></div>
-                  <div class="bar"></div>
-                  <div class="bar"></div>
-                  <div class="bar"></div>
-                </div>
-                <ul class="strength-reqs">
-                  <li id="req-length">8+ characters</li>
-                  <li id="req-upper">Uppercase letter</li>
-                  <li id="req-lower">Lowercase letter</li>
-                  <li id="req-num">Number</li>
-                  <li id="req-spec">Special character</li>
-                </ul>
-              </div>
-
-              <div class="input-group">
-                <input
-                  type="password"
-                  id="signup-confirm"
-                  required
-                  autocomplete="new-password"
-                  placeholder=" "
-                />
-                <label for="signup-confirm">Confirm Password</label>
-              </div>
-
-              <button type="submit" class="btn-primary" id="btn-signup">
-                <span class="btn-text">Create account</span>
-                <div class="btn-loader"></div>
-              </button>
-
-              <div class="form-footer">
-                Already have an account?
-                <a href="#" id="link-to-login">Sign in</a>
-              </div>
-            </form>
-          </div>
-        </div>
+      <div class="input-group">
+        <!-- ADDED name="email" -->
+        <input
+          type="email"
+          id="login-email"
+          name="email" 
+          required
+          autocomplete="email"
+          placeholder=" "
+        />
+        <label for="login-email">Email address</label>
       </div>
-    </div>
+
+      <div class="input-group">
+        <!-- ADDED name="password" -->
+        <input
+          type="password"
+          id="login-password"
+          name="password"
+          required
+          autocomplete="current-password"
+          placeholder=" "
+        />
+        <label for="login-password">Password</label>
+        <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+          <!-- SVG omitted for brevity, keep yours! -->
+        </button>
+      </div>
+      <button type="submit" class="btn-primary" id="btn-login">
+        <span class="btn-text">Sign in</span>
+        <div class="btn-loader"></div>
+      </button>
+
+      <div class="form-footer">
+        Don't have an account?
+        <a href="#" id="link-to-signup">Create one</a>
+      </div>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="signup-form" class="auth-form" novalidate>
+      <h2>Create account</h2>
+      <p class="subtitle">Join Taskora and supercharge your productivity.</p>
+
+      <div class="input-group">
+        <!-- ADDED name="username" -->
+        <input
+          type="text"
+          id="signup-username"
+          name="username"
+          required
+          autocomplete="username"
+          placeholder=" "
+          minlength="3"
+        />
+        <label for="signup-username">Username</label>
+      </div>
+
+      <div class="input-group">
+        <!-- ADDED name="email" -->
+        <input
+          type="email"
+          id="signup-email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder=" "
+        />
+        <label for="signup-email">Email address</label>
+      </div>
+
+      <div class="input-group">
+        <!-- ADDED name="password" -->
+        <input
+          type="password"
+          id="signup-password"
+          name="password"
+          required
+          autocomplete="new-password"
+          placeholder=" "
+        />
+        <label for="signup-password">Password</label>
+        <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+           <!-- SVG omitted for brevity, keep yours! -->
+        </button>
+      </div>
+
+      <div class="password-strength-container" id="password-strength-container">
+        <!-- Keep your password strength HTML here -->
+      </div>
+
+      <div class="input-group">
+        <!-- (Optional) ADDED name="confirm_password" if your backend expects it -->
+        <input
+          type="password"
+          id="signup-confirm"
+          name="confirm_password"
+          required
+          autocomplete="new-password"
+          placeholder=" "
+        />
+        <label for="signup-confirm">Confirm Password</label>
+      </div>
+
+      <button type="submit" class="btn-primary" id="btn-signup">
+        <span class="btn-text">Create account</span>
+        <div class="btn-loader"></div>
+      </button>
+
+      <div class="form-footer">
+        Already have an account?
+        <a href="#" id="link-to-login">Sign in</a>
+      </div>
+    </form>
+    
+  </div>
+</div>
 
     <!-- GREETING SEQUENCE VIEW -->
     <div id="greeting-view" class="view-container greeting-view">

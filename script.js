@@ -19,7 +19,7 @@ const API = {
   TASKS: {
     CREATE: "/tasks/create",
     UPDATE: (id) => `/tasks/update/${id}`,
-    UPDATE_STATUS: (id) => `/tasks/update-status/${id}`, // Uses query ?is_done=true/false
+    UPDATE_STATUS: (id) => `/tasks/update-status/${id}`,
     LIST: "/tasks/view-tasks",
     DELETE: (id) => `/tasks/delete-task/${id}`,
     CHAT: "/tasks/chat",
@@ -31,8 +31,8 @@ const state = {
   user: null,
   tasks: [],
   aiBusy: false,
-  activeTaskId: null, // For edit/delete modals
-  deleteTarget: null, // 'account' or 'task'
+  activeTaskId: null,
+  deleteTarget: null,
 };
 
 // --- DOM ELEMENTS ---
@@ -85,16 +85,16 @@ async function apiFetch(endpoint, options = {}) {
     const response = await fetch(url, mergedOptions);
     return response;
   } catch (error) {
-    throw new Error("Network failure");
+    // FIX APPLIED: Logs the real error to the console instead of hiding it
+    console.error(`[apiFetch Error] at ${endpoint}:`, error);
+    throw error;
   }
 }
 
-// Parses FastAPI 422 validation arrays into clean strings
 function parseApiError(data) {
   if (!data) return "An unknown error occurred.";
   if (typeof data.detail === "string") return data.detail;
   if (Array.isArray(data.detail)) {
-    // Map over FastAPI's validation array and pull out just the 'msg' field
     return data.detail.map((err) => err.msg || "Validation Error").join(" | ");
   }
   return data.message || "An error occurred.";
@@ -102,6 +102,8 @@ function parseApiError(data) {
 
 function showToast(message, type = "info") {
   const container = document.getElementById("toast-container");
+  if (!container) return; // Failsafe if toast-container isn't in HTML yet
+
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.textContent = message;
@@ -114,11 +116,14 @@ function showToast(message, type = "info") {
 }
 
 function switchView(viewName) {
-  Object.values(views).forEach((v) => v.classList.remove("active"));
+  Object.values(views).forEach((v) => {
+    if (v) v.classList.remove("active");
+  });
   if (views[viewName]) views[viewName].classList.add("active");
 }
 
 function setButtonLoading(btn, isLoading) {
+  if (!btn) return;
   if (isLoading) {
     btn.classList.add("loading");
     btn.disabled = true;
@@ -157,7 +162,8 @@ async function checkSession(isInitialLoad = true) {
       const data = await res.json();
       state.user = data.username;
       if (isInitialLoad) {
-        await initDashboard(state.user);
+        if (typeof initDashboard === "function")
+          await initDashboard(state.user);
         switchView("dashboard");
       }
       return true;
@@ -171,7 +177,8 @@ async function checkSession(isInitialLoad = true) {
           const data = await retryRes.json();
           state.user = data.username;
           if (isInitialLoad) {
-            await initDashboard(state.user);
+            if (typeof initDashboard === "function")
+              await initDashboard(state.user);
             switchView("dashboard");
           }
           return true;
@@ -189,6 +196,77 @@ async function checkSession(isInitialLoad = true) {
     return false;
   }
 }
+
+// --- FORM EVENT LISTENERS (FIX APPLIED) ---
+
+if (forms.login) {
+  forms.login.addEventListener("submit", async (e) => {
+    e.preventDefault(); // STOPS THE BROWSER FROM RELOADING THE PAGE
+
+    const submitBtn = forms.login.querySelector('button[type="submit"]');
+    setButtonLoading(submitBtn, true);
+
+    // Grabs input values automatically (ensure your HTML inputs have "name" attributes!)
+    const formData = new FormData(forms.login);
+    const data = Object.fromEntries(formData);
+
+    try {
+      const res = await apiFetch(API.AUTH.LOGIN, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        await checkSession(true);
+      } else {
+        const errorData = await res.json();
+        showToast(parseApiError(errorData), "error");
+      }
+    } catch (err) {
+      showToast("Connection failed. Check console for details.", "error");
+    } finally {
+      setButtonLoading(submitBtn, false);
+    }
+  });
+}
+
+if (forms.signup) {
+  forms.signup.addEventListener("submit", async (e) => {
+    e.preventDefault(); // STOPS THE BROWSER FROM RELOADING THE PAGE
+
+    const submitBtn = forms.signup.querySelector('button[type="submit"]');
+    setButtonLoading(submitBtn, true);
+
+    // Grabs input values automatically (ensure your HTML inputs have "name" attributes!)
+    const formData = new FormData(forms.signup);
+    const data = Object.fromEntries(formData);
+
+    try {
+      const res = await apiFetch(API.AUTH.SIGNUP, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        showToast("Account created successfully! Logging in...", "info");
+        await checkSession(true);
+      } else {
+        const errorData = await res.json();
+        showToast(parseApiError(errorData), "error");
+      }
+    } catch (err) {
+      showToast("Connection failed. Check console for details.", "error");
+    } finally {
+      setButtonLoading(submitBtn, false);
+    }
+  });
+}
+
+// --- INITIALIZATION ---
+// Call this when the DOM is fully loaded to start the app
+document.addEventListener("DOMContentLoaded", () => {
+  checkSession(true);
+});
 
 // --- AUTH FLOWS ---
 

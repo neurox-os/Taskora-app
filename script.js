@@ -306,18 +306,19 @@ async function playGreetingSequence(username, isNewUser = false) {
     const g3 = document.getElementById("greeting-3");
 
     if (isNewUser) {
-      if (g2) g2.innerHTML = `Hello,<span id="greeting-username"></span>!`;
+      if (g2) g2.innerHTML = `hello, <span id="greeting-username"></span>!`;
       if (g3) g3.textContent = "Let's get productive";
     } else {
       if (g2)
-        g2.innerHTML = `Welcome Back!, <span id="greeting-username"></span>`;
-      if (g3) g3.textContent = "Let's get things done";
+        g2.innerHTML = `Welcome Back, <span id="greeting-username"></span>!`;
+      if (g3) g3.textContent = "Back to building momentum";
     }
 
     const usernameSpan = document.getElementById("greeting-username");
     if (usernameSpan) usernameSpan.textContent = username;
 
     await delay(600);
+
     if (g2) {
       g2.classList.add("show");
       await delay(2500);

@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taskora | Plan less. Get more done.</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Background Ambient Gradients & Grid -->
+    <div class="ambient-background">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Initial Loading State -->
+    <div id="initial-loader" class="view-container loader-view active">
+      <div class="loader-content">
+        <div class="logo">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <div class="spinner"></div>
+        <p>Loading your workspace...</p>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MAIN AUTHENTICATION VIEW -->
+    <div id="auth-view" class="view-container">
+      <div class="auth-layout">
+        <div class="auth-hero">
+          <div class="brand">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+              />
+            </svg>
+            <span>Taskora</span>
+          </div>
+          <h1>Plan less.<br />Get more done.</h1>
+          <p>
+            The intelligent workspace that organizes your tasks, so you can
+            focus on execution.
+          </p>
+
+          <div class="floating-previews" aria-hidden="true">
+            <div class="preview-card card-1">
+              <div class="card-header">Today's Focus</div>
+              <div class="card-item">
+                <span class="circle open"></span> Finish DB integration
+              </div>
+              <div class="card-item">
+                <span class="circle open"></span> Build AI task planner
+              </div>
+              <div class="card-item">
+                <span class="circle done"></span> Authentication
+              </div>
+            </div>
+            <div class="preview-card card-2">
+              <div class="card-header">AEGIS Suggestion</div>
+              <div class="card-item text-muted">
+                "Break this task into 3 smaller steps?"
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-panel">
+          <div class="glass-card auth-card">
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active" novalidate>
+              <h2>Welcome back</h2>
+              <p class="subtitle">
+                Enter your details to access your workspace.
+              </p>
+
+              <div class="input-group">
+                <input
+                  type="email"
+                  id="login-email"
+                  required
+                  autocomplete="email"
+                  placeholder=" "
+                />
+                <label for="login-email">Email address</label>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="password"
+                  id="login-password"
+                  required
+                  autocomplete="current-password"
+                  placeholder=" "
+                />
+                <label for="login-password">Password</label>
+                <button
+                  type="button"
+                  class="toggle-password"
+                  aria-label="Toggle password visibility"
+                >
+                  <svg
+                    class="eye-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+              <button type="submit" class="btn-primary" id="btn-login">
+                <span class="btn-text">Sign in</span>
+                <div class="btn-loader"></div>
+              </button>
+
+              <div class="form-footer">
+                Don't have an account?
+                <a href="#" id="link-to-signup">Create one</a>
+              </div>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signup-form" class="auth-form" novalidate>
+              <h2>Create account</h2>
+              <p class="subtitle">
+                Join Taskora and supercharge your productivity.
+              </p>
+
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="signup-username"
+                  required
+                  autocomplete="username"
+                  placeholder=" "
+                  minlength="3"
+                />
+                <label for="signup-username">Username</label>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="email"
+                  id="signup-email"
+                  required
+                  autocomplete="email"
+                  placeholder=" "
+                />
+                <label for="signup-email">Email address</label>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="password"
+                  id="signup-password"
+                  required
+                  autocomplete="new-password"
+                  placeholder=" "
+                />
+                <label for="signup-password">Password</label>
+                <button
+                  type="button"
+                  class="toggle-password"
+                  aria-label="Toggle password visibility"
+                >
+                  <svg
+                    class="eye-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+
+              <div
+                class="password-strength-container"
+                id="password-strength-container"
+              >
+                <div class="strength-header">
+                  <span>Password strength</span>
+                  <span id="strength-label">Weak</span>
+                </div>
+                <div class="strength-bars">
+                  <div class="bar"></div>
+                  <div class="bar"></div>
+                  <div class="bar"></div>
+                  <div class="bar"></div>
+                </div>
+                <ul class="strength-reqs">
+                  <li id="req-length">8+ characters</li>
+                  <li id="req-upper">Uppercase letter</li>
+                  <li id="req-lower">Lowercase letter</li>
+                  <li id="req-num">Number</li>
+                  <li id="req-spec">Special character</li>
+                </ul>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="password"
+                  id="signup-confirm"
+                  required
+                  autocomplete="new-password"
+                  placeholder=" "
+                />
+                <label for="signup-confirm">Confirm Password</label>
+              </div>
+
+              <button type="submit" class="btn-primary" id="btn-signup">
+                <span class="btn-text">Create account</span>
+                <div class="btn-loader"></div>
+              </button>
+
+              <div class="form-footer">
+                Already have an account?
+                <a href="#" id="link-to-login">Sign in</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GREETING SEQUENCE VIEW -->
+    <div id="greeting-view" class="view-container greeting-view">
+      <div class="greeting-text" id="greeting-2">
+        Welcome Back!, <span id="greeting-username"></span>
+      </div>
+      <div class="greeting-text" id="greeting-3">Let's get things done</div>
+    </div>
+
+    <!-- AUTHENTICATED DASHBOARD SHELL -->
+    <div id="dashboard-view" class="view-container dashboard-view">
+      <header class="glass-header">
+        <div class="brand">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span>Taskora</span>
+        </div>
+
+        <div class="header-actions">
+          <!-- New Ask AEGIS trigger button -->
+          <button id="btn-toggle-aegis" class="btn-secondary aegis-trigger">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+              <path d="M2 12h20"></path>
+            </svg>
+            <span class="btn-text">Ask AEGIS</span>
+          </button>
+
+          <div class="user-menu-container">
+            <button
+              id="btn-user-avatar"
+              class="avatar-btn"
+              aria-label="Open user menu"
+            >
+              <span id="avatar-initial">U</span>
+            </button>
+            <div id="user-hotbar" class="glass-dropdown">
+              <div class="dropdown-header">
+                <span class="display-name" id="hotbar-username">Username</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="btn-logout">Log out</button>
+              <button class="dropdown-item destructive" id="btn-delete-prompt">
+                Delete account
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard-main">
+        <!-- Removed 'aegis-active' by default. Toggled via JS -->
+        <div class="dashboard-layout" id="dashboard-layout">
+          <!-- Left: Task Workspace -->
+          <section class="task-panel">
+            <div class="task-header">
+              <h2>Your tasks</h2>
+              <p class="subtitle">
+                Stay focused. Let AEGIS handle the planning.
+              </p>
+            </div>
+
+            <form id="create-task-form" class="create-task-composer">
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="new-task-desc"
+                  required
+                  autocomplete="off"
+                  placeholder=" "
+                />
+                <label for="new-task-desc"
+                  >Add a task (e.g., Finish database by Friday)</label
+                >
+              </div>
+              <button
+                type="submit"
+                class="btn-icon"
+                aria-label="Create task"
+                id="btn-create-task"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </form>
+
+            <div id="task-list" class="task-list">
+              <!-- Tasks dynamically injected here -->
+            </div>
+
+            <div id="task-empty-state" class="empty-state hidden">
+              <div class="empty-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3>Your workspace is clear</h3>
+              <p>Ask AEGIS to create your next task.</p>
+              <button
+                id="btn-empty-talk-aegis"
+                class="btn-secondary subtle-btn"
+              >
+                Talk to AEGIS
+              </button>
+            </div>
+          </section>
+
+          <!-- Right: AEGIS Assistant -->
+          <section class="aegis-panel">
+            <div class="glass-card aegis-card">
+              <div class="aegis-header">
+                <div class="aegis-brand">
+                  <svg
+                    class="aegis-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path
+                      d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"
+                    ></path>
+                    <path d="M2 12h20"></path>
+                  </svg>
+                  <span>AEGIS</span>
+                </div>
+                <!-- Close button for AEGIS panel -->
+                <button
+                  id="btn-close-aegis"
+                  class="btn-icon"
+                  aria-label="Close AEGIS"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <div id="aegis-chat-history" class="aegis-history">
+                <!-- Messages dynamically injected here -->
+              </div>
+
+              <div id="aegis-thinking" class="aegis-thinking hidden">
+                <div class="dot-typing"></div>
+              </div>
+
+              <form id="aegis-form" class="aegis-composer">
+                <textarea
+                  id="aegis-input"
+                  rows="1"
+                  placeholder="Ask AEGIS..."
+                  required
+                ></textarea>
+                <button
+                  type="submit"
+                  class="btn-icon"
+                  aria-label="Send message"
+                  id="btn-send-aegis"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Delete Confirmation Modal (Used for Account & Task) -->
+    <div id="delete-modal" class="modal-overlay">
+      <div class="glass-card modal-card">
+        <h3 id="delete-modal-title">Delete?</h3>
+        <p id="delete-modal-desc">This action cannot be undone.</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="btn-cancel-delete">Cancel</button>
+          <button class="btn-destructive" id="btn-confirm-delete">
+            <span class="btn-text" id="delete-btn-text">Delete</span>
+            <div class="btn-loader"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="edit-task-modal" class="modal-overlay">
+      <div class="glass-card modal-card">
+        <h3>Edit Task</h3>
+        <p>Update your task description and AEGIS will refine the details.</p>
+        <form id="edit-task-form">
+          <div class="input-group">
+            <textarea
+              id="edit-task-desc"
+              required
+              rows="3"
+              placeholder=" "
+            ></textarea>
+            <label for="edit-task-desc">Task description</label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="btn-cancel-edit">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" id="btn-confirm-edit">
+              <span class="btn-text">Update Task</span>
+              <div class="btn-loader"></div>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

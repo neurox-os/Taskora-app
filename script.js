@@ -4,7 +4,7 @@
  */
 
 // --- CONFIGURATION ---
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "https://taskora-backend-y86y.onrender.com";
 // Production: const BASE_URL = "https://your-api.onrender.com";
 
 const API = {

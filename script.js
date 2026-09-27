@@ -89,6 +89,17 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
+// Parses FastAPI 422 validation arrays into clean strings
+function parseApiError(data) {
+  if (!data) return "An unknown error occurred.";
+  if (typeof data.detail === "string") return data.detail;
+  if (Array.isArray(data.detail)) {
+    // Map over FastAPI's validation array and pull out just the 'msg' field
+    return data.detail.map((err) => err.msg || "Validation Error").join(" | ");
+  }
+  return data.message || "An error occurred.";
+}
+
 function showToast(message, type = "info") {
   const container = document.getElementById("toast-container");
   const toast = document.createElement("div");
@@ -210,7 +221,14 @@ forms.login.addEventListener("submit", async (e) => {
     } else if (res.status === 404) {
       showToast("Account not found.", "error");
     } else {
-      showToast("Something went wrong. Please try again.", "error");
+      // Attempt to parse FastAPI Validation errors securely
+      try {
+        const errorData = await res.json();
+        console.error("Backend Error JSON:", errorData); // <-- Logs to Dev Console
+        showToast(parseApiError(errorData), "error");
+      } catch (jsonErr) {
+        showToast("Something went wrong. Please try again.", "error");
+      }
     }
   } catch (err) {
     showToast("Unable to connect. Check your connection.", "error");
@@ -251,8 +269,14 @@ forms.signup.addEventListener("submit", async (e) => {
       showToast("Email is already registered. Try logging in.", "error");
       toggleAuthForms("login");
     } else {
-      const data = await res.json();
-      showToast(data.detail || "Signup failed.", "error");
+      // Attempt to parse FastAPI Validation errors securely
+      try {
+        const errorData = await res.json();
+        console.error("Backend Error JSON:", errorData); // <-- Logs to Dev Console
+        showToast(parseApiError(errorData), "error");
+      } catch (jsonErr) {
+        showToast("Signup failed. Please try again.", "error");
+      }
     }
   } catch (err) {
     showToast("Unable to connect. Check your connection.", "error");
@@ -269,16 +293,20 @@ async function playGreetingSequence(username, isNewUser = false) {
   const g3 = document.getElementById("greeting-3");
 
   if (isNewUser) {
-    g2.innerHTML = `Hello, <span id="greeting-username"></span>!  `;
+    g2.innerHTML = `<span id="greeting-username"></span>`;
     g3.textContent = "Let's get productive";
   } else {
-    g2.innerHTML = `Welcome Back, <span id="greeting-username"></span>!`;
-    g3.textContent = "Back to building momentum";
+    g2.innerHTML = `Welcome Back!, <span id="greeting-username"></span>`;
+    g3.textContent = "Let's get things done";
   }
 
   document.getElementById("greeting-username").textContent = username;
 
   await delay(600);
+  const g1 = document.getElementById("greeting-1");
+  g1.classList.add("show");
+  await delay(2500);
+  g1.classList.remove("show");
   g2.classList.add("show");
   await delay(2500);
   g2.classList.remove("show");
@@ -620,8 +648,8 @@ function handleAegisResponse(data) {
       if (data.requires_confirmation) {
         suggestionsContainer.innerHTML += `
                     <div class="ai-action-row">
-                        <button class="btn-secondary" onclick="aegisConfirmSuggestions()">Create these tasks</button>
-                        <button class="btn-secondary subtle-btn" onclick="aegisRejectSuggestions()">Not now</button>
+                        <button type="button" class="btn-secondary" onclick="aegisConfirmSuggestions()">Create these tasks</button>
+                        <button type="button" class="btn-secondary subtle-btn" onclick="aegisRejectSuggestions()">Not now</button>
                     </div>
                 `;
       }

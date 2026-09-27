@@ -4,7 +4,7 @@
  */
 
 // --- CONFIGURATION ---
-const BASE_URL = "https://taskora-backend-y86y.onrender.com";
+const BASE_URL = "http://127.0.0.1:8000";
 // Production: const BASE_URL = "https://your-api.onrender.com";
 
 const API = {
@@ -19,7 +19,7 @@ const API = {
   TASKS: {
     CREATE: "/tasks/create",
     UPDATE: (id) => `/tasks/update/${id}`,
-    UPDATE_STATUS: (id) => `/tasks/update-status/${id}`, // Uses query ?is_done=true/false
+    UPDATE_STATUS: (id) => `/tasks/update-status/${id}`,
     LIST: "/tasks/view-tasks",
     DELETE: (id) => `/tasks/delete-task/${id}`,
     CHAT: "/tasks/chat",
@@ -31,8 +31,8 @@ const state = {
   user: null,
   tasks: [],
   aiBusy: false,
-  activeTaskId: null, // For edit/delete modals
-  deleteTarget: null, // 'account' or 'task'
+  activeTaskId: null,
+  deleteTarget: null,
 };
 
 // --- DOM ELEMENTS ---
@@ -94,7 +94,6 @@ function parseApiError(data) {
   if (!data) return "An unknown error occurred.";
   if (typeof data.detail === "string") return data.detail;
   if (Array.isArray(data.detail)) {
-    // Map over FastAPI's validation array and pull out just the 'msg' field
     return data.detail.map((err) => err.msg || "Validation Error").join(" | ");
   }
   return data.message || "An error occurred.";
@@ -102,6 +101,7 @@ function parseApiError(data) {
 
 function showToast(message, type = "info") {
   const container = document.getElementById("toast-container");
+  if (!container) return;
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.textContent = message;
@@ -114,11 +114,14 @@ function showToast(message, type = "info") {
 }
 
 function switchView(viewName) {
-  Object.values(views).forEach((v) => v.classList.remove("active"));
+  Object.values(views).forEach((v) => {
+    if (v) v.classList.remove("active");
+  });
   if (views[viewName]) views[viewName].classList.add("active");
 }
 
 function setButtonLoading(btn, isLoading) {
+  if (!btn) return;
   if (isLoading) {
     btn.classList.add("loading");
     btn.disabled = true;
@@ -135,13 +138,9 @@ function escapeHTML(str) {
   return str.replace(
     /[&<>'"]/g,
     (tag) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "'": "&#39;",
-        '"': "&quot;",
-      })[tag] || tag,
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+        tag
+      ] || tag,
   );
 }
 
@@ -201,38 +200,48 @@ forms.login.addEventListener("submit", async (e) => {
   if (!email || !password) return;
   setButtonLoading(btn, true);
 
+  let res;
+  // 1. Strictly isolate the network request
   try {
-    const res = await apiFetch(API.AUTH.LOGIN, {
+    res = await apiFetch(API.AUTH.LOGIN, {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+  } catch (err) {
+    showToast("Unable to connect. Check your connection.", "error");
+    setButtonLoading(btn, false);
+    return; // Stop execution if actual network error
+  }
 
-    if (res.ok) {
+  // 2. Handle the response safely outside the network try/catch
+  if (res.ok) {
+    let fetchedUser = "User";
+    try {
       const userRes = await apiFetch(API.AUTH.ME, { method: "GET" });
       if (userRes.ok) {
         const userData = await userRes.json();
-        state.user = userData.username;
-        await playGreetingSequence(state.user, false);
-      } else {
-        await playGreetingSequence("User", false);
+        fetchedUser = userData.username;
       }
-    } else if (res.status === 401) {
-      showToast("Invalid email or password.", "error");
-    } else if (res.status === 404) {
-      showToast("Account not found.", "error");
-    } else {
-      // Attempt to parse FastAPI Validation errors securely
-      try {
-        const errorData = await res.json();
-        console.error("Backend Error JSON:", errorData); // <-- Logs to Dev Console
-        showToast(parseApiError(errorData), "error");
-      } catch (jsonErr) {
-        showToast("Something went wrong. Please try again.", "error");
-      }
+    } catch (fetchErr) {
+      console.error("Non-fatal error fetching profile:", fetchErr);
     }
-  } catch (err) {
-    showToast("Unable to connect. Check your connection.", "error");
-  } finally {
+    state.user = fetchedUser;
+
+    // Trigger greeting sequence WITHOUT awaiting it here to prevent blocking
+    playGreetingSequence(state.user, false).catch(console.error);
+  } else if (res.status === 401) {
+    showToast("Invalid email or password.", "error");
+    setButtonLoading(btn, false);
+  } else if (res.status === 404) {
+    showToast("Account not found.", "error");
+    setButtonLoading(btn, false);
+  } else {
+    try {
+      const errorData = await res.json();
+      showToast(parseApiError(errorData), "error");
+    } catch (jsonErr) {
+      showToast("Something went wrong. Please try again.", "error");
+    }
     setButtonLoading(btn, false);
   }
 });
@@ -256,80 +265,113 @@ forms.signup.addEventListener("submit", async (e) => {
 
   setButtonLoading(btn, true);
 
+  let res;
+  // 1. Strictly isolate the network request
   try {
-    const res = await apiFetch(API.AUTH.SIGNUP, {
+    res = await apiFetch(API.AUTH.SIGNUP, {
       method: "POST",
       body: JSON.stringify({ username, email, password }),
     });
-
-    if (res.ok) {
-      state.user = username;
-      await playGreetingSequence(state.user, true);
-    } else if (res.status === 409) {
-      showToast("Email is already registered. Try logging in.", "error");
-      toggleAuthForms("login");
-    } else {
-      // Attempt to parse FastAPI Validation errors securely
-      try {
-        const errorData = await res.json();
-        console.error("Backend Error JSON:", errorData); // <-- Logs to Dev Console
-        showToast(parseApiError(errorData), "error");
-      } catch (jsonErr) {
-        showToast("Signup failed. Please try again.", "error");
-      }
-    }
   } catch (err) {
     showToast("Unable to connect. Check your connection.", "error");
-  } finally {
+    setButtonLoading(btn, false);
+    return;
+  }
+
+  // 2. Handle the response
+  if (res.ok) {
+    state.user = username;
+    playGreetingSequence(state.user, true).catch(console.error);
+  } else if (res.status === 409) {
+    showToast("Email is already registered. Try logging in.", "error");
+    toggleAuthForms("login");
+    setButtonLoading(btn, false);
+  } else {
+    try {
+      const errorData = await res.json();
+      showToast(parseApiError(errorData), "error");
+    } catch (jsonErr) {
+      showToast("Signup failed. Please try again.", "error");
+    }
     setButtonLoading(btn, false);
   }
 });
 
 async function playGreetingSequence(username, isNewUser = false) {
-  views.auth.style.opacity = "0";
-  setTimeout(() => switchView("greeting"), 500);
+  try {
+    views.auth.style.opacity = "0";
+    setTimeout(() => switchView("greeting"), 500);
 
-  const g2 = document.getElementById("greeting-2");
-  const g3 = document.getElementById("greeting-3");
+    const g2 = document.getElementById("greeting-2");
+    const g3 = document.getElementById("greeting-3");
 
-  if (isNewUser) {
-    g2.innerHTML = `<span id="greeting-username"></span>`;
-    g3.textContent = "Let's get productive";
-  } else {
-    g2.innerHTML = `Welcome Back!, <span id="greeting-username"></span>`;
-    g3.textContent = "Let's get things done";
+    if (isNewUser) {
+      if (g2) g2.innerHTML = `<span id="greeting-username"></span>`;
+      if (g3) g3.textContent = "Let's get productive";
+    } else {
+      if (g2)
+        g2.innerHTML = `Welcome Back!, <span id="greeting-username"></span>`;
+      if (g3) g3.textContent = "Let's get things done";
+    }
+
+    const usernameSpan = document.getElementById("greeting-username");
+    if (usernameSpan) usernameSpan.textContent = username;
+
+    await delay(600);
+    const g1 = document.getElementById("greeting-1");
+
+    if (g1) {
+      g1.classList.add("show");
+      await delay(2500);
+      g1.classList.remove("show");
+    }
+    if (g2) {
+      g2.classList.add("show");
+      await delay(2500);
+      g2.classList.remove("show");
+    }
+    if (g3) {
+      g3.classList.add("show");
+      await delay(2500);
+      g3.classList.remove("show");
+    }
+
+    await initDashboard(username);
+    switchView("dashboard");
+    views.auth.style.opacity = "";
+
+    // Safe resets
+    if (forms.login) forms.login.reset();
+    if (forms.signup) forms.signup.reset();
+    resetPasswordStrength();
+    setButtonLoading(document.getElementById("btn-login"), false);
+    setButtonLoading(document.getElementById("btn-signup"), false);
+  } catch (err) {
+    console.error("Non-fatal animation error:", err);
+    // Fallback: Skip animation and force them into dashboard safely
+    await initDashboard(username);
+    switchView("dashboard");
+    views.auth.style.opacity = "";
+    setButtonLoading(document.getElementById("btn-login"), false);
+    setButtonLoading(document.getElementById("btn-signup"), false);
   }
-
-  document.getElementById("greeting-username").textContent = username;
-
-  await delay(600);
-  const g1 = document.getElementById("greeting-1");
-  g1.classList.add("show");
-  await delay(2500);
-  g1.classList.remove("show");
-  g2.classList.add("show");
-  await delay(2500);
-  g2.classList.remove("show");
-  g3.classList.add("show");
-  await delay(2500);
-  g3.classList.remove("show");
-
-  await initDashboard(username);
-  switchView("dashboard");
-  views.auth.style.opacity = "";
-  forms.login.reset();
-  forms.signup.reset();
-  resetPasswordStrength();
 }
 
 // --- DASHBOARD INIT & TASKS ---
 
 async function initDashboard(username) {
-  document.getElementById("hotbar-username").textContent = username;
-  document.getElementById("avatar-initial").textContent = username
-    .charAt(0)
-    .toUpperCase();
-  await loadTasks();
+  try {
+    const elUsername = document.getElementById("hotbar-username");
+    const elAvatar = document.getElementById("avatar-initial");
+
+    if (elUsername) elUsername.textContent = username;
+    if (elAvatar && username)
+      elAvatar.textContent = username.charAt(0).toUpperCase();
+
+    await loadTasks();
+  } catch (err) {
+    console.error("Dashboard Init Error:", err);
+  }
 }
 
 async function loadTasks() {
@@ -344,18 +386,18 @@ async function loadTasks() {
       switchView("auth");
     }
   } catch (e) {
-    showToast("Unable to load tasks.", "error");
+    console.error("Tasks could not be loaded:", e);
   }
 }
 
 function renderTasks() {
-  dom.taskList.innerHTML = "";
+  if (!dom.taskList || !dom.emptyState) return;
 
+  dom.taskList.innerHTML = "";
   if (state.tasks.length === 0) {
     dom.emptyState.classList.remove("hidden");
     return;
   }
-
   dom.emptyState.classList.add("hidden");
 
   state.tasks.forEach((task) => {
@@ -500,7 +542,6 @@ async function playAegisIntro() {
   dom.aegisThinking.classList.remove("hidden");
   scrollToBottomAegis();
 
-  // Simulate AI typing delay
   await delay(1200);
 
   dom.aegisThinking.classList.add("hidden");
@@ -538,11 +579,12 @@ function openAegisPanel(e) {
   }, 500);
 }
 
-dom.btnToggleAegis.addEventListener("click", toggleAegisPanel);
-dom.btnCloseAegis.addEventListener("click", toggleAegisPanel);
-document
-  .getElementById("btn-empty-talk-aegis")
-  .addEventListener("click", openAegisPanel);
+if (dom.btnToggleAegis)
+  dom.btnToggleAegis.addEventListener("click", toggleAegisPanel);
+if (dom.btnCloseAegis)
+  dom.btnCloseAegis.addEventListener("click", toggleAegisPanel);
+const btnTalkAegis = document.getElementById("btn-empty-talk-aegis");
+if (btnTalkAegis) btnTalkAegis.addEventListener("click", openAegisPanel);
 
 // --- AEGIS ASSISTANT CHAT LOGIC ---
 
@@ -697,50 +739,64 @@ function scrollToBottomAegis() {
   dom.aegisHistory.scrollTop = dom.aegisHistory.scrollHeight;
 }
 
-// --- USER MENU & DELETE ACCOUNT LOGIC ---
+// --- USER MENU & DELETE LOGIC ---
 
-dom.avatarBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  dom.hotbar.classList.toggle("active");
-});
+if (dom.avatarBtn) {
+  dom.avatarBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dom.hotbar.classList.toggle("active");
+  });
+}
 document.addEventListener("click", (e) => {
-  if (!dom.hotbar.contains(e.target) && e.target !== dom.avatarBtn) {
+  if (
+    dom.hotbar &&
+    !dom.hotbar.contains(e.target) &&
+    e.target !== dom.avatarBtn
+  ) {
     dom.hotbar.classList.remove("active");
   }
 });
 
-document.getElementById("btn-logout").addEventListener("click", async () => {
-  try {
-    await apiFetch(API.AUTH.LOGOUT, { method: "POST" });
-  } catch (e) {}
-  state.user = null;
-  dom.hotbar.classList.remove("active");
-  switchView("auth");
-  showToast("You've been logged out.", "success");
-});
+const btnLogout = document.getElementById("btn-logout");
+if (btnLogout) {
+  btnLogout.addEventListener("click", async () => {
+    try {
+      await apiFetch(API.AUTH.LOGOUT, { method: "POST" });
+    } catch (e) {}
+    state.user = null;
+    dom.hotbar.classList.remove("active");
+    switchView("auth");
+    showToast("You've been logged out.", "success");
+  });
+}
 
-document.getElementById("btn-delete-prompt").addEventListener("click", () => {
-  dom.hotbar.classList.remove("active");
-  state.deleteTarget = "account";
-  document.getElementById("delete-modal-title").textContent =
-    "Delete your account?";
-  document.getElementById("delete-modal-desc").textContent =
-    "This permanently removes your account and its associated data. This action cannot be undone.";
-  document.getElementById("delete-btn-text").textContent = "Delete Account";
-  dom.deleteModal.classList.add("active");
-});
+const btnDeletePrompt = document.getElementById("btn-delete-prompt");
+if (btnDeletePrompt) {
+  btnDeletePrompt.addEventListener("click", () => {
+    dom.hotbar.classList.remove("active");
+    state.deleteTarget = "account";
+    document.getElementById("delete-modal-title").textContent =
+      "Delete your account?";
+    document.getElementById("delete-modal-desc").textContent =
+      "This permanently removes your account and its associated data. This action cannot be undone.";
+    document.getElementById("delete-btn-text").textContent = "Delete Account";
+    dom.deleteModal.classList.add("active");
+  });
+}
 
-document.getElementById("btn-cancel-delete").addEventListener("click", () => {
-  dom.deleteModal.classList.remove("active");
-  state.deleteTarget = null;
-  state.activeTaskId = null;
-});
+const btnCancelDelete = document.getElementById("btn-cancel-delete");
+if (btnCancelDelete) {
+  btnCancelDelete.addEventListener("click", () => {
+    dom.deleteModal.classList.remove("active");
+    state.deleteTarget = null;
+    state.activeTaskId = null;
+  });
+}
 
-document
-  .getElementById("btn-confirm-delete")
-  .addEventListener("click", async () => {
-    const btn = document.getElementById("btn-confirm-delete");
-    setButtonLoading(btn, true);
+const btnConfirmDelete = document.getElementById("btn-confirm-delete");
+if (btnConfirmDelete) {
+  btnConfirmDelete.addEventListener("click", async () => {
+    setButtonLoading(btnConfirmDelete, true);
 
     try {
       if (state.deleteTarget === "account") {
@@ -770,22 +826,30 @@ document
     } catch (err) {
       showToast("Network error. Try again later.", "error");
     } finally {
-      setButtonLoading(btn, false);
+      setButtonLoading(btnConfirmDelete, false);
       state.deleteTarget = null;
       state.activeTaskId = null;
     }
   });
+}
 
 // --- AUTH UI INTERACTIONS ---
 
-document.getElementById("link-to-signup").addEventListener("click", (e) => {
-  e.preventDefault();
-  toggleAuthForms("signup");
-});
-document.getElementById("link-to-login").addEventListener("click", (e) => {
-  e.preventDefault();
-  toggleAuthForms("login");
-});
+const linkToSignup = document.getElementById("link-to-signup");
+if (linkToSignup) {
+  linkToSignup.addEventListener("click", (e) => {
+    e.preventDefault();
+    toggleAuthForms("signup");
+  });
+}
+
+const linkToLogin = document.getElementById("link-to-login");
+if (linkToLogin) {
+  linkToLogin.addEventListener("click", (e) => {
+    e.preventDefault();
+    toggleAuthForms("login");
+  });
+}
 
 function toggleAuthForms(target) {
   if (target === "signup") {
@@ -800,6 +864,7 @@ function toggleAuthForms(target) {
 document.querySelectorAll(".toggle-password").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     const input = e.currentTarget.parentElement.querySelector("input");
+    if (!input) return;
     const type =
       input.getAttribute("type") === "password" ? "text" : "password";
     input.setAttribute("type", type);
@@ -821,30 +886,32 @@ const reqElements = {
   spec: document.getElementById("req-spec"),
 };
 
-signupPassword.addEventListener("input", (e) => {
-  const val = e.target.value;
-  if (val.length > 0) {
-    strengthContainer.style.display = "block";
-  } else {
-    strengthContainer.style.display = "none";
-    resetPasswordStrength();
-    return;
-  }
+if (signupPassword) {
+  signupPassword.addEventListener("input", (e) => {
+    const val = e.target.value;
+    if (val.length > 0) {
+      strengthContainer.style.display = "block";
+    } else {
+      strengthContainer.style.display = "none";
+      resetPasswordStrength();
+      return;
+    }
 
-  const rules = {
-    length: val.length >= 8,
-    upper: /[A-Z]/.test(val),
-    lower: /[a-z]/.test(val),
-    num: /[0-9]/.test(val),
-    spec: /[^A-Za-z0-9]/.test(val),
-  };
+    const rules = {
+      length: val.length >= 8,
+      upper: /[A-Z]/.test(val),
+      lower: /[a-z]/.test(val),
+      num: /[0-9]/.test(val),
+      spec: /[^A-Za-z0-9]/.test(val),
+    };
 
-  Object.keys(rules).forEach((key) => {
-    if (rules[key]) reqElements[key].classList.add("met");
-    else reqElements[key].classList.remove("met");
+    Object.keys(rules).forEach((key) => {
+      if (rules[key]) reqElements[key].classList.add("met");
+      else reqElements[key].classList.remove("met");
+    });
+    updateStrengthVisuals(Object.values(rules).filter(Boolean).length);
   });
-  updateStrengthVisuals(Object.values(rules).filter(Boolean).length);
-});
+}
 
 function updateStrengthVisuals(score) {
   strengthBars.forEach((bar) => {
@@ -873,16 +940,23 @@ function updateStrengthVisuals(score) {
     filledBars = 4;
   }
 
-  strengthLabel.textContent = label;
-  strengthLabel.style.color = color;
+  if (strengthLabel) {
+    strengthLabel.textContent = label;
+    strengthLabel.style.color = color;
+  }
   for (let i = 0; i < filledBars; i++) {
-    strengthBars[i].style.background = color;
-    strengthBars[i].style.boxShadow = `0 0 8px ${color}`;
+    if (strengthBars[i]) {
+      strengthBars[i].style.background = color;
+      strengthBars[i].style.boxShadow = `0 0 8px ${color}`;
+    }
   }
 }
+
 function resetPasswordStrength() {
-  strengthContainer.style.display = "none";
-  Object.values(reqElements).forEach((el) => el.classList.remove("met"));
+  if (strengthContainer) strengthContainer.style.display = "none";
+  Object.values(reqElements).forEach((el) => {
+    if (el) el.classList.remove("met");
+  });
   updateStrengthVisuals(0);
 }
 

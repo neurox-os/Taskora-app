@@ -318,12 +318,6 @@ async function playGreetingSequence(username, isNewUser = false) {
     if (usernameSpan) usernameSpan.textContent = username;
 
     await delay(600);
-
-    if (g1) {
-      g1.classList.add("show");
-      await delay(2500);
-      g1.classList.remove("show");
-    }
     if (g2) {
       g2.classList.add("show");
       await delay(2500);
